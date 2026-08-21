@@ -60,18 +60,16 @@ The shell needs to be on **HTTPS** — iOS refuses to register a service worker 
 without one there is no offline. A LAN IP won't do. So the shell gets published, and the data
 gets carried across by hand.
 
+The shell is already published: **<https://seanpduffy.github.io/sevenhills/>**
+
 **One-time, per phone:**
 
-1. Publish to GitHub Pages (the `docs/` folder holds no personal data):
-   ```bash
-   git init && git add . && git commit -m "Who's Who" && git branch -M main
-   ```
-   Then in Settings → Pages, serve from `main` / `/docs`.
-   (Pages only serves from the repo root or `/docs` — hence the folder name.)
-   Check `git status` first: nothing under `data/` may ever appear.
-2. Open the Pages URL in **Safari** → Share → **Add to Home Screen**.
-3. AirDrop `data/bundle/shs-data.json` to the phone, save it to Files.
-4. Open the app from the home screen → **Import data file** → pick it.
+1. Open <https://seanpduffy.github.io/sevenhills/> in **Safari** (not Chrome — only Safari
+   can add to the home screen).
+2. Share → **Add to Home Screen**. Launch it once from the icon so the service worker caches
+   the shell.
+3. AirDrop `data/bundle/shs-data.json` from the Mac, save it to Files.
+4. Open the app → **Import data file** → pick it.
 
 After that it's fully offline. To push new data later: AirDrop the new bundle, then
 **More → Replace data file**.
