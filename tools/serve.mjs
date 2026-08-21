@@ -22,4 +22,4 @@ createServer(async (req, res) => {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     res.end('404 ' + p);
   }
-}).listen(PORT, () => console.log(`serving ${ROOT} → http://localhost:${PORT}/app/`));
+}).listen(PORT, () => console.log(`serving ${ROOT} → http://localhost:${PORT}/docs/`));

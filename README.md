@@ -11,7 +11,7 @@ live, and whatever you and Janice have learned about them.
 ## The one rule
 
 `data/` holds 109 families' names, addresses, phone numbers and emails. It is gitignored and
-must stay that way. `app/` is the shell — it contains **zero** personal data and is the only
+must stay that way. `docs/` is the shell — it contains **zero** personal data and is the only
 thing that ever gets published. That split is what lets the app live on free public hosting
 while the directory itself never leaves your devices.
 
@@ -46,11 +46,11 @@ asymmetric sibling link, a missing photo. If it exits non-zero, don't ship the b
 node tools/serve.mjs
 ```
 
-Then <http://localhost:8747/app/>. `localhost` counts as a secure context, so the service
+Then <http://localhost:8747/docs/>. `localhost` counts as a secure context, so the service
 worker behaves exactly as it will in production.
 
 While developing, the service worker will happily serve you a stale copy of `app.js`. Either
-use a private window, or bump `VERSION` in [`app/sw.js`](app/sw.js).
+use a private window, or bump `VERSION` in [`docs/sw.js`](docs/sw.js).
 
 ---
 
@@ -62,11 +62,12 @@ gets carried across by hand.
 
 **One-time, per phone:**
 
-1. Publish `app/` to GitHub Pages (it holds no personal data):
+1. Publish to GitHub Pages (the `docs/` folder holds no personal data):
    ```bash
    git init && git add . && git commit -m "Who's Who" && git branch -M main
    ```
-   Push to a repo, then in Settings → Pages, serve from `main` / `/app`.
+   Then in Settings → Pages, serve from `main` / `/docs`.
+   (Pages only serves from the repo root or `/docs` — hence the folder name.)
    Check `git status` first: nothing under `data/` may ever appear.
 2. Open the Pages URL in **Safari** → Share → **Add to Home Screen**.
 3. AirDrop `data/bundle/shs-data.json` to the phone, save it to Files.
@@ -135,7 +136,7 @@ surfaces a profile URL it's stored as a tappable source link, nothing more.
 ## Layout
 
 ```
-app/                  the shell — publishable, no personal data
+docs/                 the shell — publishable, no personal data
   index.html app.js styles.css sw.js manifest.webmanifest icon-*.png
 tools/
   collect.js          paste into the portal console; pulls roster, families, photos
