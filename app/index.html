@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Who's Who</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Who's Who">
+<meta name="theme-color" content="#12211a">
+<meta name="robots" content="noindex, nofollow">
+
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Shown until a data bundle has been imported. This shell ships with zero
+     personal data in it; everything comes from the file you import. -->
+<div id="onboard" class="onboard" hidden>
+  <div class="onboard-inner">
+    <img src="icon-192.png" alt="" width="72" height="72" class="onboard-icon">
+    <h1>Who's Who</h1>
+    <p>Pre-K and 1st grade families, offline on your phone.</p>
+    <p class="muted">This app ships empty. Import the data file Sean generated on the
+       Mac — it stays on this device and is never uploaded anywhere.</p>
+    <label class="btn btn-primary">
+      Import data file
+      <input type="file" id="onboard-file" accept="application/json,.json" hidden>
+    </label>
+    <p class="onboard-err" id="onboard-err" hidden></p>
+  </div>
+</div>
+
+<main id="view" class="view"></main>
+
+<nav id="tabbar" class="tabbar" hidden>
+  <a href="#/kids"     data-tab="kids">    <span class="ico" aria-hidden="true">◉</span>Kids</a>
+  <a href="#/parents"  data-tab="parents"> <span class="ico" aria-hidden="true">◍</span>Parents</a>
+  <a href="#/cram"     data-tab="cram">    <span class="ico" aria-hidden="true">▤</span>Cram</a>
+  <a href="#/quiz"     data-tab="quiz">    <span class="ico" aria-hidden="true">◆</span>Quiz</a>
+  <a href="#/settings" data-tab="settings"><span class="ico" aria-hidden="true">⚙</span>More</a>
+</nav>
+
+<script src="app.js"></script>
+</body>
+</html>

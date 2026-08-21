@@ -1,0 +1,15 @@
+# ─────────────────────────────────────────────────────────────
+#  EVERY BYTE OF OTHER FAMILIES' PERSONAL DATA LIVES IN data/.
+#  This repo's app/ shell is intended to be published publicly
+#  (GitHub Pages). Nothing under data/ may ever be committed.
+# ─────────────────────────────────────────────────────────────
+data/
+*.shs-data.json
+shs-data.json
+seven-hills-raw.json
+bios.json
+families.json
+notes*.json
+
+node_modules/
+.DS_Store
