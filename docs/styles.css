@@ -247,3 +247,10 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   .face:active, .chip:active, .btn:active { transform: scale(.97); }
   .face, .chip, .btn { transition: transform .09s ease; }
 }
+
+/* Secondary filter row (homeroom within a grade) — quieter than the grade row
+   so the primary choice still reads first. */
+.seg-sub { margin-top: -6px; }
+.seg-sub button { font-size: 13px; padding: 7px 8px; }
+.seg-sub button[aria-pressed="true"] { background: var(--bg-high); color: var(--accent); border-color: var(--accent-dim); }
+.btn-sub { background: var(--bg-raise); font-size: 14px; padding: 10px 18px; margin-left: 18px; width: calc(100% - 18px); }

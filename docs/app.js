@@ -54,6 +54,7 @@ const S = {
   author: 'Sean',
   quizStats: {},
   grade: null,       // active grade filter
+  room: null,        // active homeroom filter (within a grade)
   query: '',
   byStudent: new Map(),
   byParent: new Map(),
@@ -100,7 +101,7 @@ const bySurname = (a, b) =>
 const matchesStudent = (s, q) => {
   if (!q) return true;
   const hay = [
-    s.name, s.legalFirst, s.grade,
+    s.name, s.legalFirst, s.grade, s.homeroom,
     ...parentsOf(s).flatMap((p) => [p.name, p.first, p.last, p.jobTitle, ...(p.emails || [])]),
     s.address?.line1, s.address?.city,
     ...notesFor('student', s.id).map((n) => n.text),
@@ -114,10 +115,18 @@ const matchesStudent = (s, q) => {
 
 const grades = () => [...new Set(S.data.students.map((s) => s.grade))];
 
+/* Homerooms within the selected grade. Only worth showing when there's a
+   choice to make — Pre-K has a single room, so the row would be noise. */
+const roomsInGrade = () => S.grade
+  ? [...new Set(S.data.students.filter((s) => s.grade === S.grade).map((s) => s.homeroom).filter(Boolean))].sort()
+  : [];
+
 function viewKids() {
   const gs = grades();
   const list = S.data.students
-    .filter((s) => (!S.grade || s.grade === S.grade) && matchesStudent(s, S.query));
+    .filter((s) => (!S.grade || s.grade === S.grade)
+                && (!S.room || s.homeroom === S.room)
+                && matchesStudent(s, S.query));
 
   return `
     <div class="head">
@@ -129,6 +138,11 @@ function viewKids() {
       <button data-grade="" aria-pressed="${!S.grade}">All</button>
       ${gs.map((g) => `<button data-grade="${esc(g)}" aria-pressed="${S.grade === g}">${esc(g === 'Pre-Kindergarten' ? 'Pre-K' : g)}</button>`).join('')}
     </div>
+    ${(() => { const rs = roomsInGrade(); return rs.length > 1 ? `
+      <div class="seg seg-sub">
+        <button data-room="" aria-pressed="${!S.room}">Both classes</button>
+        ${rs.map((r) => `<button data-room="${esc(r)}" aria-pressed="${S.room === r}">${esc(r)}</button>`).join('')}
+      </div>` : ''; })()}
     ${list.length ? `<div class="wall">${list.map(faceTile).join('')}</div>`
                   : `<p class="empty">Nobody matches “${esc(S.query)}”.</p>`}
   `;
@@ -154,7 +168,7 @@ function viewKid(id) {
     <div class="card-title">
       <h1>${esc(s.name)}</h1>
       <div class="meta">
-        ${esc(s.grade)}${s.legalFirst !== s.first ? ` · legally ${esc(s.legalFirst)}` : ''}
+        ${esc(s.grade)}${s.homeroom ? ` · ${esc(s.homeroom)}` : ''}${s.legalFirst !== s.first ? ` · legally ${esc(s.legalFirst)}` : ''}
         ${s.milesFromHome != null ? ` · ${s.milesFromHome} mi away` : ''}
       </div>
     </div>
@@ -316,7 +330,12 @@ function viewCram() {
       <p class="muted">Sixty seconds in the car. Faces first, names on tap.</p>
       ${gs.map((g) => {
         const n = S.data.students.filter((s) => s.grade === g).length;
-        return `<button class="btn btn-block" data-cram="${esc(g)}">${esc(g)} · ${n} kids</button>`;
+        const rs = [...new Set(S.data.students.filter((s) => s.grade === g).map((s) => s.homeroom).filter(Boolean))].sort();
+        return `<button class="btn btn-block" data-cram="${esc(g)}">${esc(g)} · ${n} kids</button>` +
+          (rs.length > 1 ? rs.map((r) => {
+            const rn = S.data.students.filter((s) => s.grade === g && s.homeroom === r).length;
+            return `<button class="btn btn-block btn-sub" data-cram-room="${esc(g)}||${esc(r)}">${esc(r)}'s class · ${rn}</button>`;
+          }).join('') : '');
       }).join('')}
       <button class="btn btn-block" data-cram="*">Everyone · ${S.data.students.length}</button>`;
   }
@@ -336,7 +355,7 @@ function viewCram() {
         <div class="cram-name">${cram.shown ? esc(s.name) : '?'}</div>
         <div class="cram-reveal">${cram.shown ? `
           <b>${esc(firstNames(ps) || '—')} ${esc(s.last)}</b><br>
-          ${esc(s.address?.city || '')}${s.milesFromHome != null ? ` · ${s.milesFromHome} mi` : ''}
+          ${esc(s.homeroom || '')}${s.homeroom ? ' · ' : ''}${esc(s.address?.city || '')}${s.milesFromHome != null ? ` · ${s.milesFromHome} mi` : ''}
           ${sibs.length ? `<br>sibling: ${esc(sibs.map((b) => `${b.first} (${b.grade === 'Pre-Kindergarten' ? 'Pre-K' : b.grade})`).join(', '))}` : ''}
         ` : '<span class="cram-hint">tap to reveal</span>'}</div>
       </div>
@@ -473,15 +492,18 @@ function render() {
 // ── events ────────────────────────────────────────────────────────────────
 
 document.addEventListener('click', async (e) => {
-  const t = e.target.closest('[data-grade],[data-author],[data-cram],[data-cram-exit],[data-cram-next],[data-cram-prev],[data-cram-flip],[data-answer],[data-quiz-next],[data-del],#note-save');
+  const t = e.target.closest('[data-grade],[data-room],[data-author],[data-cram],[data-cram-room],[data-cram-exit],[data-cram-next],[data-cram-prev],[data-cram-flip],[data-answer],[data-quiz-next],[data-del],#note-save');
   if (!t) return;
 
-  // grade filter
+  // grade filter — changing grade drops any homeroom filter, which won't apply
   if (t.dataset.grade !== undefined) {
     S.grade = t.dataset.grade || null;
+    S.room = null;
     if (quiz) quiz = { round: newQuizRound(), right: 0, total: 0 };
     return render();
   }
+
+  if (t.dataset.room !== undefined) { S.room = t.dataset.room || null; return render(); }
 
   if (t.dataset.author) { S.author = t.dataset.author; await DB.set('author', S.author); return render(); }
 
@@ -490,6 +512,11 @@ document.addEventListener('click', async (e) => {
     const g = t.dataset.cram;
     const pool = g === '*' ? S.data.students : S.data.students.filter((s) => s.grade === g);
     cram = { deck: shuffle(pool), i: 0, shown: false };
+    return render();
+  }
+  if (t.dataset.cramRoom) {
+    const [g, r] = t.dataset.cramRoom.split('||');
+    cram = { deck: shuffle(S.data.students.filter((s) => s.grade === g && s.homeroom === r)), i: 0, shown: false };
     return render();
   }
   if (t.hasAttribute('data-cram-exit')) { cram = null; return render(); }

@@ -83,6 +83,30 @@
   log(`roster: ${students.length} students across ${CFG.grades.join(' + ')}`);
   if (!students.length) throw new Error('Empty roster — are the grade names still correct?');
 
+  /* Homeroom lives in a facet (custom_2), not on the student record, so it has
+     to be reconstructed by querying once per room and seeing who comes back.
+     Not every student is assigned one — treat a missing value as unknown
+     rather than inventing a room. */
+  const homerooms = {};
+  try {
+    for (const g of CFG.grades) {
+      const gf = encodeURIComponent(`${CFG.gradeFacetIdx}_${g}`);
+      const facets = await getJSON(
+        `/api/directory/directoryfacetvaluesget?directoryId=${CFG.studentsDirId}` +
+        `&searchVal=&facets=${gf}&searchAll=false`);
+      for (const hr of facets.filter((f) => f.FieldName === 'custom_2')) {
+        const key = encodeURIComponent(`${CFG.gradeFacetIdx}_${g}|${hr.FacetIndexID}_${hr.FacetValue}`);
+        const rows = await getJSON(
+          `/api/directory/directoryresultsget?directoryId=${CFG.studentsDirId}` +
+          `&searchVal=&facets=${key}&searchAll=false`);
+        rows.forEach((r) => { homerooms[r.UserID] = hr.FacetValue; });
+      }
+    }
+    log(`homerooms: ${Object.keys(homerooms).length} students assigned`);
+  } catch (e) {
+    warn('homeroom lookup failed, continuing without it:', e.message);
+  }
+
   /* The Current Parents directory carries a JobTitle the student directory
      doesn't. It's only filled in for a minority, but it comes straight from the
      school, so it beats anything we could infer from a web search. */
@@ -131,12 +155,14 @@
         households : Object.keys(households).length,
         photos     : Object.keys(photos).length,
         jobTitles  : Object.keys(parentJobTitles).length,
+        homerooms  : Object.keys(homerooms).length,
       },
     },
     students,
     households,
     photos,
     parentJobTitles,
+    homerooms,
   };
 
   const json = JSON.stringify(payload);

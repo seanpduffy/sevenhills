@@ -138,6 +138,8 @@ const siblingIdsFor = (studentId) => {
     .filter((id) => rosterById.has(id)))];
 };
 
+const homerooms = raw.homerooms || {};
+
 const students = raw.students.map((s) => {
   const rows = raw.households[s.UserID] || [];
   const guardians = rows.filter((r) => !['Self', 'Sibling'].includes(r.relationship_description));
@@ -151,6 +153,8 @@ const students = raw.students.map((s) => {
     name        : titleish(`${clean(s.Nickname) || s.FirstName} ${s.LastName}`),
     grade       : s.GradeDisplay,
     gradeSort   : GRADE_ORDER.indexOf(s.GradeDisplay),
+    /* Homeroom teacher's surname. Null where the school hasn't assigned one. */
+    homeroom    : homerooms[s.UserID] || null,
     email       : clean(s.Email),
     householdId : s.PreferredAddressId ?? address?.id ?? null,
     address,
@@ -278,6 +282,8 @@ console.log(`\n  ${OUT}`);
 console.log(`  ${out.students.length} students · ${parents.length} parents · ${households.size} households`);
 console.log(`  ${students.filter(s=>s.siblingIds.length).length} kids with a sibling in these grades`);
 console.log(`  ${bothGrades.length} parents with a kid in BOTH grades`);
+const rooms = students.reduce((m, s) => (m[s.homeroom || 'unassigned'] = (m[s.homeroom || 'unassigned'] || 0) + 1, m), {});
+console.log(`  homerooms: ${Object.entries(rooms).map(([k, v]) => `${k} ${v}`).join(' · ')}`);
 console.log(`  ${withTitle.length} parents have a job title from the school directory`);
 console.log(`  contactability: ${noEmail.length} parents without email, ${noPhone.length} without a phone`);
 if (home) console.log(`  home anchor: ${home.city} — nearest family ${Math.min(...students.map(s=>s.milesFromHome).filter(Boolean))} mi`);
