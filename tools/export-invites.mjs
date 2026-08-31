@@ -61,7 +61,7 @@ function build(students) {
       const email = p.emails[0];
       if (seenEmail.has(email.toLowerCase())) continue;
       seenEmail.add(email.toLowerCase());
-      rows.push([p.first, p.last, email, s.name, s.homeroom || 'unassigned', p.relation]);
+      rows.push([p.first, p.last, email, s.name, s.homeroom || 'Unknown', p.relation]);
       if (s.householdId != null && !seenHousehold.has(s.householdId)) {
         seenHousehold.add(s.householdId);
         oneEach.push([p.first, p.last, email]);
@@ -74,6 +74,7 @@ function build(students) {
 mkdirSync('data/exports', { recursive: true });
 const slug = (x) => x.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 const H3 = ['First Name', 'Last Name', 'Email'];
+const H5 = [...H3, 'Class', 'Child'];
 const H6 = [...H3, 'Child', 'Class', 'Relation'];
 const written = [];
 
@@ -81,7 +82,10 @@ function emit(label, students) {
   if (!students.length) return;
   const { rows, oneEach, noEmail, grandparents } = build(students);
   const base = `data/exports/${label}`;
-  writeFileSync(`${base}-invites.csv`, csv(H3, rows.map((r) => r.slice(0, 3))));
+  /* The main list: everyone, with the class alongside, so you can pick across
+     both rooms in one pass instead of reconciling two files. */
+  writeFileSync(`${base}-invites.csv`, csv(H5, rows.map((r) => [r[0], r[1], r[2], r[4], r[3]])));
+  writeFileSync(`${base}-invites-emails-only.csv`, csv(H3, rows.map((r) => r.slice(0, 3))));
   writeFileSync(`${base}-invites-one-each.csv`, csv(H3, oneEach));
   writeFileSync(`${base}-invites-annotated.csv`, csv(H6, rows));
   if (noEmail.length) writeFileSync(`${base}-no-email.csv`, csv(['First Name', 'Last Name', 'Phone', 'Child', 'Class', 'Relation'], noEmail));
@@ -116,5 +120,7 @@ if (unassigned.length) {
   console.log(`\n  ! ${unassigned.length} student(s) in ${grade} have no homeroom in the directory:`);
   unassigned.forEach((s) => console.log(`      ${s.name} — included in the grade file, absent from both class files`));
 }
-console.log(`\n  Import the plain -invites.csv. Use -one-each for a single invite per household.`);
-console.log(`  The -annotated file is for you, not the invite service.\n`);
+console.log(`\n  -invites.csv            every parent + which class their kid is in  <- the one you want`);
+console.log(`  -invites-emails-only    same people, just the three import columns`);
+console.log(`  -invites-one-each       one contact per household`);
+console.log(`  -invites-annotated      adds relation, for your reference\n`);
