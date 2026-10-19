@@ -2,7 +2,7 @@
  * from the network at all (it lives in IndexedDB), so once this is installed the
  * app works permanently offline. Bump VERSION to ship a shell update. */
 
-const VERSION = 'shell-v1';
+const VERSION = 'shell-v2';
 const ASSETS = [
   './', './index.html', './app.js', './styles.css',
   './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png',

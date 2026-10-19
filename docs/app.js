@@ -113,7 +113,10 @@ const matchesStudent = (s, q) => {
 
 // ── views ─────────────────────────────────────────────────────────────────
 
-const grades = () => [...new Set(S.data.students.map((s) => s.grade))];
+/* In school order, not whatever order the data happens to arrive in. */
+const grades = () => [...new Map(
+  [...S.data.students].sort((a, b) => a.gradeSort - b.gradeSort).map((s) => [s.grade, 1])
+).keys()];
 
 /* Homerooms within the selected grade. Only worth showing when there's a
    choice to make — Pre-K has a single room, so the row would be noise. */
@@ -126,7 +129,12 @@ function viewKids() {
   const list = S.data.students
     .filter((s) => (!S.grade || s.grade === S.grade)
                 && (!S.room || s.homeroom === S.room)
-                && matchesStudent(s, S.query));
+                && matchesStudent(s, S.query))
+    /* First name is what you call a kid by, so that's the order you scan in.
+       Grades stay grouped under "All" so Pre-K and 1st don't interleave. */
+    .sort((a, b) => (a.gradeSort - b.gradeSort)
+                 || (a.first || '').localeCompare(b.first || '')
+                 || (a.last || '').localeCompare(b.last || ''));
 
   return `
     <div class="head">
@@ -148,12 +156,25 @@ function viewKids() {
   `;
 }
 
+/* Parents' names under the tile. The directory only says "Parent", never
+   mother or father, so both first names are shown in the order the school
+   lists them. A parent whose surname differs from the kid's gets it spelled
+   out — otherwise "Shireen" alone wouldn't tell you she's Dr. Ghorbani. */
+const parentLine = (s) => {
+  const ps = parentsOf(s);
+  const shown = ps.some((p) => p.relation === 'Parent') ? ps.filter((p) => p.relation === 'Parent') : ps;
+  return shown
+    .map((p) => (p.last && p.last !== s.last ? `${p.first} ${p.last}` : p.first))
+    .filter(Boolean)
+    .join(' & ');
+};
+
 const faceTile = (s) => `
   <a class="face" href="#/kid/${s.id}">
     <img src="${photo(s.id)}" alt="" loading="lazy">
     ${isKnown(s) ? '<span class="known"></span>' : ''}
-    <div class="nm">${esc(s.first)}</div>
-    <div class="sub">${esc(s.last)}</div>
+    <div class="nm"><b>${esc(s.first)}</b> ${esc(s.last)}</div>
+    <div class="par">${esc(parentLine(s))}</div>
   </a>`;
 
 function viewKid(id) {
